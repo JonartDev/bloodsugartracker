@@ -11,3 +11,66 @@ body,
 body {
     background-color: #f8fafc
 }
+
+/* Print Styles for Blood Sugar Records */
+@media print {
+
+    /* Hide everything except the print content */
+    body * {
+        visibility: hidden;
+    }
+
+    /* Show only the print section */
+    .print-section,
+    .print-section * {
+        visibility: visible;
+    }
+
+    /* Position the print section */
+    .print-section {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        padding: 0;
+        margin: 0;
+    }
+
+    /* Landscape orientation for short bond paper */
+    @page {
+        size: landscape;
+        margin: 0.5in;
+    }
+
+    /* Print-specific styles */
+    .no-print {
+        display: none !important;
+    }
+
+    /* Ensure good contrast for printing */
+    .print-section {
+        color: #000 !important;
+        background: white !important;
+        font-family: "Times New Roman", Times, serif !important;
+    }
+
+    /* Remove backgrounds and shadows for better printing */
+    .print-section .bg-gradient-to-r,
+    .print-section .shadow-lg,
+    .print-section .backdrop-blur-sm {
+        background: white !important;
+        box-shadow: none !important;
+        backdrop-filter: none !important;
+    }
+
+    /* Ensure borders are visible */
+    .print-section .border {
+        border-color: #000 !important;
+    }
+
+    /* Better text contrast */
+    .print-section .text-gray-600,
+    .print-section .text-gray-900 {
+        color: #000 !important;
+    }
+}

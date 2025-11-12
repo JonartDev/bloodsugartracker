@@ -1,45 +1,81 @@
 import React, { useState } from 'react'
-import { User, Lock, Eye, EyeOff, Shield } from 'lucide-react'
+import { User, Lock, Eye, EyeOff, Shield, Mail } from 'lucide-react'
 
-const Login = ({ onLogin }) => {
+const Login = ({ onLogin, onSignUp }) => {
     const [username, setUsername] = useState('')
     const [password, setPassword] = useState('')
     const [confirmPassword, setConfirmPassword] = useState('')
+    const [name, setName] = useState('')
     const [showPassword, setShowPassword] = useState(false)
     const [showConfirmPassword, setShowConfirmPassword] = useState(false)
     const [isLogin, setIsLogin] = useState(true)
     const [error, setError] = useState('')
+    const [loading, setLoading] = useState(false)
+    const [successMessage, setSuccessMessage] = useState('') // For registration success
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault()
         setError('')
+        setSuccessMessage('')
+        setLoading(true)
 
-        // Basic validation
-        if (!username.trim() || !password.trim()) {
-            setError('Please fill in all fields')
-            return
+        try {
+            // Basic validation
+            if (!username.trim()) {
+                throw new Error('Please enter a username')
+            }
+            if (!password.trim()) {
+                throw new Error('Please enter a password')
+            }
+            if (password.length < 6) {
+                throw new Error('Password must be at least 6 characters')
+            }
+
+            if (isLogin) {
+                // Login flow
+                const userData = {
+                    username: username.trim().toLowerCase(),
+                    password: password
+                }
+                await onLogin(userData)
+            } else {
+                // Signup flow
+                if (!name.trim()) {
+                    throw new Error('Please enter your name')
+                }
+                if (password !== confirmPassword) {
+                    throw new Error('Passwords do not match')
+                }
+
+                const userData = {
+                    username: username.trim().toLowerCase(),
+                    password: password,
+                    name: name.trim()
+                }
+
+                const success = await onSignUp(userData)
+                if (success) {
+                    // Registration successful - switch to login mode
+                    setSuccessMessage('Account created successfully! Please sign in.')
+                    setIsLogin(true) // Switch back to login form
+                    // Clear form fields
+                    setUsername('')
+                    setPassword('')
+                    setConfirmPassword('')
+                    setName('')
+                }
+            }
+        } catch (error) {
+            console.error('Form submission error:', error)
+            setError(error.message)
+            // For login errors, also show in the main alert system
+            if (isLogin) {
+                // Re-throw the error so onLogin can handle it in App.jsx alert system
+                throw error
+            }
+        } finally {
+            setLoading(false)
         }
-
-        if (!isLogin && password !== confirmPassword) {
-            setError('Passwords do not match')
-            return
-        }
-
-        if (!isLogin && password.length < 6) {
-            setError('Password must be at least 6 characters')
-            return
-        }
-
-        // For demo purposes - in real app, you'd hash the password and send to backend
-        const userData = {
-            name: username.trim(),
-            username: username.trim().toLowerCase(),
-            // In a real app, you would NEVER store passwords like this
-            // This is just for local demo purposes
-            password: password
-        }
-
-        onLogin(userData)
     }
 
     const togglePasswordVisibility = () => {
@@ -53,8 +89,12 @@ const Login = ({ onLogin }) => {
     const switchMode = () => {
         setIsLogin(!isLogin)
         setError('')
+        setSuccessMessage('')
         setPassword('')
         setConfirmPassword('')
+        if (!isLogin) {
+            setName('') // Clear name when switching to login
+        }
     }
 
     return (
@@ -67,8 +107,17 @@ const Login = ({ onLogin }) => {
                             <Shield className="h-8 w-8 text-white" />
                         </div>
                         <h1 className="text-3xl font-bold text-white mb-2">GlucoseTracker</h1>
-                        <p className="text-white/80">Track your blood sugar levels securely</p>
+                        <p className="text-white/80">
+                            {isLogin ? 'Sign in to your account' : 'Create your account'}
+                        </p>
                     </div>
+
+                    {/* Success Message */}
+                    {successMessage && (
+                        <div className="bg-green-500/20 border border-green-500/50 text-white px-4 py-3 rounded-lg mb-6 text-sm">
+                            {successMessage}
+                        </div>
+                    )}
 
                     {/* Error Message */}
                     {error && (
@@ -79,13 +128,33 @@ const Login = ({ onLogin }) => {
 
                     {/* Form */}
                     <form onSubmit={handleSubmit} className="space-y-6">
+                        {/* Name Field (Sign up only) */}
+                        {!isLogin && (
+                            <div>
+                                <label className="block text-sm font-medium text-white mb-2">
+                                    Full Name
+                                </label>
+                                <div className="relative">
+                                    <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-white/60" />
+                                    <input
+                                        type="text"
+                                        value={name}
+                                        onChange={(e) => setName(e.target.value)}
+                                        className="w-full bg-white/10 border border-white/20 rounded-lg pl-10 pr-4 py-3 text-white placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-white/50 focus:border-transparent"
+                                        placeholder="Enter your full name"
+                                        required
+                                    />
+                                </div>
+                            </div>
+                        )}
+
                         {/* Username Field */}
                         <div>
                             <label className="block text-sm font-medium text-white mb-2">
                                 Username
                             </label>
                             <div className="relative">
-                                <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-white/60" />
+                                <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-white/60" />
                                 <input
                                     type="text"
                                     value={username}
@@ -152,9 +221,17 @@ const Login = ({ onLogin }) => {
                         {/* Submit Button */}
                         <button
                             type="submit"
-                            className="w-full bg-white text-blue-600 py-3 px-4 rounded-lg font-semibold hover:bg-gray-100 transition-colors duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-transform"
+                            disabled={loading}
+                            className="w-full bg-white text-blue-600 py-3 px-4 rounded-lg font-semibold hover:bg-gray-100 transition-colors duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-transform disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                            {isLogin ? 'Sign In' : 'Create Account'}
+                            {loading ? (
+                                <div className="flex items-center justify-center">
+                                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600 mr-2"></div>
+                                    {isLogin ? 'Signing In...' : 'Creating Account...'}
+                                </div>
+                            ) : (
+                                isLogin ? 'Sign In' : 'Create Account'
+                            )}
                         </button>
                     </form>
 
@@ -171,12 +248,6 @@ const Login = ({ onLogin }) => {
                             </button>
                         </p>
                     </div>
-                </div>
-
-                <div className="mt-6 text-center">
-                    <p className="text-white/60 text-sm">
-                        Your data is stored locally in your browser
-                    </p>
                 </div>
             </div>
         </div>
