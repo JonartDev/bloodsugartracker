@@ -164,9 +164,25 @@ function App() {
 
                             <button
                                 onClick={openNew}
-                                className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-4 py-2 rounded-lg font-semibold hover:from-blue-700 hover:to-purple-700 transition-all duration-200 shadow-lg hover:shadow-xl"
+                                className="
+                                        bg-gradient-to-r from-blue-600 to-purple-600 
+                                        text-white 
+                                        px-4 py-3 
+                                        md:px-4 md:py-2 
+                                        rounded-lg 
+                                        font-semibold 
+                                        hover:from-blue-700 hover:to-purple-700 
+                                        transition-all duration-200 
+                                        shadow-lg hover:shadow-xl
+                                        w-8 h-8 
+                                        md:w-auto md:h-auto
+                                        md:px-4
+                                        flex items-center justify-center
+                                    "
+                                title="Add New Reading"
                             >
-                                + New Reading
+                                <span className="md:hidden">+</span>
+                                <span className="hidden md:inline">+ New Reading</span>
                             </button>
 
                             <button
